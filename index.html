@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CryptoTax AU — ATO-Ready Reports</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="js/main.js" defer></script>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="logo">
+      <div class="logo-mark">₿</div>
+      <span class="logo-text">CryptoTax <span class="logo-au">AU</span></span>
+    </div>
+    <div class="price-ticker" id="priceTicker">Loading prices…</div>
+    <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode">🌙</button>
+    <nav class="tax-year-picker">
+      <label>Tax Year</label>
+      <select id="taxYearSelect">
+        <option value="2026">FY 2025–26</option>
+        <option value="2025">FY 2024–25</option>
+        <option value="2024">FY 2023–24</option>
+        <option value="2023">FY 2022–23</option>
+        <option value="2022">FY 2021–22</option>
+      </select>
+    </nav>
+  </header>
+
+  <!-- WIZARD BAR -->
+  <div class="wizard-bar">
+    <button class="wizard-step active" data-step="1"><span class="step-num">1</span> Add Transactions</button>
+    <div class="wizard-divider"></div>
+    <button class="wizard-step" data-step="2"><span class="step-num">2</span> Review</button>
+    <div class="wizard-divider"></div>
+    <button class="wizard-step" data-step="3"><span class="step-num">3</span> Tax Summary</button>
+    <div class="wizard-divider"></div>
+    <button class="wizard-step" data-step="4"><span class="step-num">4</span> Export</button>
+  </div>
+
+  <main class="main-content">
+
+    <!-- ─── STEP 1 ─── -->
+    <section class="step-panel active" id="step1">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:6px">
+        <div>
+          <h2 class="panel-title">Add Your Transactions</h2>
+          <p class="panel-sub">Enter trades manually, upload a CSV, or connect your exchange directly.</p>
+        </div>
+        <button class="btn-demo" id="loadDemoBtn">Load Demo Data</button>
+      </div>
+
+      <div class="input-tabs">
+        <button class="tab-btn active" data-tab="manual">✏️ Manual Entry</button>
+        <button class="tab-btn" data-tab="csv">📂 Upload CSV</button>
+        <button class="tab-btn" data-tab="api">🔗 Exchange API</button>
+      </div>
+
+      <!-- MANUAL ENTRY -->
+      <div class="tab-panel active" id="tab-manual">
+        <div class="form-section">
+          <div class="section-label">Transaction Details</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="txDate" />
+            </div>
+            <div class="form-group">
+              <label>Transaction Type</label>
+              <select id="txType">
+                <option value="buy">🟢 Buy</option>
+                <option value="sell">🔴 Sell</option>
+                <option value="swap">🔵 Swap / DeFi</option>
+                <option value="staking">🟣 Staking Reward</option>
+                <option value="mining">🟡 Mining Income</option>
+                <option value="nft_buy">🎨 NFT Purchase</option>
+                <option value="nft_sell">🎨 NFT Sale</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Asset</label>
+              <input type="text" id="txAsset" placeholder="BTC, ETH, SOL…" autocomplete="off" />
+            </div>
+            <div class="form-group">
+              <label>Quantity</label>
+              <input type="number" id="txQty" placeholder="0.00" step="any" min="0" />
+            </div>
+            <div class="form-group">
+              <label>Price per unit (AUD) <span id="priceHint" class="price-hint"></span></label>
+              <input type="number" id="txPrice" placeholder="Auto-fills from live price" step="any" min="0" />
+            </div>
+            <div class="form-group">
+              <label>Fee (AUD)</label>
+              <input type="number" id="txFee" placeholder="0.00" step="any" min="0" />
+            </div>
+            <div class="form-group form-group--full">
+              <label>Exchange / Notes</label>
+              <input type="text" id="txNotes" placeholder="CoinSpot, Binance, self-custody…" />
+            </div>
+          </div>
+          <button class="btn-primary" id="addTxBtn">+ Add Transaction</button>
+        </div>
+      </div>
+
+      <!-- CSV UPLOAD -->
+      <div class="tab-panel" id="tab-csv">
+        <div class="drop-zone" id="dropZone">
+          <div class="drop-icon">📂</div>
+          <p class="drop-title">Drop your CSV here, or <label for="csvFile" class="link-label">browse files</label></p>
+          <input type="file" id="csvFile" accept=".csv" hidden />
+          <p class="drop-hint" style="margin-top:8px">Supports Binance · CoinSpot · Swyftx · Kraken · Coinbase · Generic</p>
+        </div>
+        <div class="csv-preview" id="csvPreview" hidden></div>
+        <div class="csv-template">
+          <span>Need the format?</span>
+          <button class="btn-ghost" id="downloadTemplate" style="padding:7px 16px;font-size:0.82rem">Download CSV Template</button>
+        </div>
+      </div>
+
+      <!-- API CONNECT -->
+      <div class="tab-panel" id="tab-api">
+        <div class="exchange-grid">
+          <div class="exchange-card" data-exchange="binance">
+            <div class="exchange-logo">🟡</div>
+            <div class="exchange-name">Binance</div>
+            <button class="btn-connect">Connect</button>
+          </div>
+          <div class="exchange-card" data-exchange="coinspot">
+            <div class="exchange-logo">🔵</div>
+            <div class="exchange-name">CoinSpot</div>
+            <button class="btn-connect">Connect</button>
+          </div>
+          <div class="exchange-card" data-exchange="swyftx">
+            <div class="exchange-logo">🟢</div>
+            <div class="exchange-name">Swyftx</div>
+            <button class="btn-connect">Connect</button>
+          </div>
+          <div class="exchange-card" data-exchange="coinbase">
+            <div class="exchange-logo">🔷</div>
+            <div class="exchange-name">Coinbase</div>
+            <button class="btn-connect">Connect</button>
+          </div>
+          <div class="exchange-card" data-exchange="kraken">
+            <div class="exchange-logo">🐙</div>
+            <div class="exchange-name">Kraken</div>
+            <button class="btn-connect">Connect</button>
+          </div>
+          <div class="exchange-card" data-exchange="other">
+            <div class="exchange-logo">⚙️</div>
+            <div class="exchange-name">Custom</div>
+            <button class="btn-connect">Configure</button>
+          </div>
+        </div>
+        <div class="api-modal" id="apiModal" hidden>
+          <div class="api-modal-box">
+            <h3 id="apiModalTitle">Connect Exchange</h3>
+            <div class="form-group">
+              <label>API Key</label>
+              <input type="text" id="apiKey" placeholder="Paste your read-only API key" />
+            </div>
+            <div class="form-group">
+              <label>API Secret</label>
+              <input type="password" id="apiSecret" placeholder="Paste your API secret" />
+            </div>
+            <p class="api-note">🔒 Use <strong>read-only keys</strong> only. Keys are stored in your browser's localStorage and never sent to any server.</p>
+            <div class="modal-actions">
+              <button class="btn-ghost" id="apiCancel">Cancel</button>
+              <button class="btn-primary" id="apiImport">Import Transactions</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRANSACTION LIST + PORTFOLIO -->
+      <div class="tx-list-header" id="txListHeader" hidden>
+        <h3>Transactions this year <span id="txCount" class="badge">0</span></h3>
+        <button class="btn-ghost" id="clearAll" style="padding:6px 14px;font-size:0.8rem">Clear all</button>
+      </div>
+      <div id="txList"></div>
+
+      <!-- PORTFOLIO PANEL -->
+      <div id="portfolioPanel" class="portfolio-panel" hidden></div>
+
+      <div class="step-actions" id="step1Next" hidden>
+        <button class="btn-primary btn-lg" onclick="goToStep(2)">Review Transactions →</button>
+      </div>
+    </section>
+
+    <!-- ─── STEP 2: REVIEW ─── -->
+    <section class="step-panel" id="step2">
+      <h2 class="panel-title">Review &amp; Classify</h2>
+      <p class="panel-sub">Confirm the ATO category for each transaction. Adjust any misclassifications before calculating.</p>
+      <div id="reviewTable"></div>
+      <div class="step-actions">
+        <button class="btn-ghost" onclick="goToStep(1)">← Back</button>
+        <button class="btn-primary btn-lg" onclick="computeTax(); goToStep(3)">Calculate Tax →</button>
+      </div>
+    </section>
+
+    <!-- ─── STEP 3: TAX SUMMARY ─── -->
+    <section class="step-panel" id="step3">
+      <h2 class="panel-title">Your ATO Tax Summary</h2>
+      <p class="panel-sub">Calculated using FIFO cost-base, 50% CGT discount for long-term holdings, and current ATO rules.</p>
+
+      <div class="summary-grid">
+        <div class="summary-card summary-card--cg">
+          <div class="summary-label">Net Capital Gain</div>
+          <div class="summary-value" id="netCG">$0.00</div>
+          <div class="summary-sub" id="cgDiscount"></div>
+        </div>
+        <div class="summary-card summary-card--income">
+          <div class="summary-label">Ordinary Income</div>
+          <div class="summary-value" id="ordinaryIncome">$0.00</div>
+          <div class="summary-sub">Staking &amp; Mining</div>
+        </div>
+        <div class="summary-card summary-card--loss">
+          <div class="summary-label">Capital Losses</div>
+          <div class="summary-value" id="capitalLoss">$0.00</div>
+        </div>
+        <div class="summary-card summary-card--nft">
+          <div class="summary-label">NFT Gains / Losses</div>
+          <div class="summary-value" id="nftGain">$0.00</div>
+        </div>
+      </div>
+
+      <div class="breakdown-section">
+        <h3>Capital Gains Breakdown</h3>
+        <div id="cgBreakdown"></div>
+      </div>
+
+      <div class="ato-info">
+        <h4>ATO Rules Applied — FY <span id="summaryFY">2025–26</span></h4>
+        <ul>
+          <li>50% CGT discount for assets held longer than 12 months (individuals)</li>
+          <li>Cost-base method: FIFO (First In, First Out)</li>
+          <li>Staking &amp; mining rewards = ordinary income at market value on receipt (ATO guidance)</li>
+          <li>Crypto-to-crypto swaps are CGT disposal events — s104-10 ITAA97</li>
+          <li>NFT disposals treated as CGT assets</li>
+          <li>Capital losses offset capital gains; net losses cannot offset other income</li>
+        </ul>
+      </div>
+
+      <div class="step-actions">
+        <button class="btn-ghost" onclick="goToStep(2)">← Back</button>
+        <button class="btn-primary btn-lg" onclick="goToStep(4)">Export Report →</button>
+      </div>
+    </section>
+
+    <!-- ─── STEP 4: EXPORT ─── -->
+    <section class="step-panel" id="step4">
+      <h2 class="panel-title">Export Your Report</h2>
+      <p class="panel-sub">Download ATO-ready documents for myTax or your accountant. Tax deadline: 31 Oct 2026.</p>
+
+      <div class="export-grid">
+        <div class="export-card">
+          <div class="export-icon">📄</div>
+          <div class="export-name">ATO Summary CSV</div>
+          <div class="export-desc">Capital gains schedule ready to paste into myTax</div>
+          <button class="btn-primary" id="exportCSV" style="margin-top:4px">Download</button>
+        </div>
+        <div class="export-card">
+          <div class="export-icon">📊</div>
+          <div class="export-name">Full Transaction Log</div>
+          <div class="export-desc">Every transaction with cost-base calculations</div>
+          <button class="btn-primary" id="exportFullCSV" style="margin-top:4px">Download</button>
+        </div>
+        <div class="export-card">
+          <div class="export-icon">🖨️</div>
+          <div class="export-name">Tax Report PDF</div>
+          <div class="export-desc">Formatted report to share with your accountant</div>
+          <button class="btn-primary" id="exportPDF" style="margin-top:4px">Download</button>
+        </div>
+        <div class="export-card">
+          <div class="export-icon">💾</div>
+          <div class="export-name">Save / Load Backup</div>
+          <div class="export-desc">Export as JSON to resume later or restore data</div>
+          <button class="btn-primary" id="exportJSON" style="margin-top:4px">Save JSON</button>
+          <button class="btn-ghost" id="loadJSON" style="margin-top:4px;padding:7px 16px;font-size:0.82rem">Load JSON</button>
+          <input type="file" id="jsonFile" accept=".json" hidden />
+        </div>
+      </div>
+
+      <div class="step-actions">
+        <button class="btn-ghost" onclick="goToStep(3)">← Back to Summary</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>Runs entirely in your browser — no servers, no signups. Always verify with a registered tax agent.</p>
+    <a href="https://www.ato.gov.au/individuals-and-families/investments-and-assets/crypto-asset-investments" target="_blank" rel="noopener">ATO Crypto Guide ↗</a>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+</body>
+</html>
